@@ -39,6 +39,7 @@ from api.analytics import get_date_range
 from api.study import study_api
 from api.feedback_api import feedback_api
 from model.study import Study, initStudies
+from model.reservation import Reservation, initReservations
 from model.classroom import Classroom
 from model.persona import Persona, initPersonas, initPersonaUsers
 from model.post import Post, init_posts
@@ -80,11 +81,13 @@ app.register_blueprint(feedback_api)
 app.register_blueprint(data_export_import_api)  # Register the data export/import API
 app.register_blueprint(joke_api)  # Register the joke API blueprint
 app.register_blueprint(post_api)  # Register the social media post API
+app.register_blueprint(reservation_bp)
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
 with app.app_context():
     initJokes()
+    initReservations()
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
