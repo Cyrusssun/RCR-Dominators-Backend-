@@ -105,6 +105,8 @@ def booked_seats(date_str, time_str):
 
 
 def initReservations():
-    with db.session.no_autoflush:
-        if not db.session.query(Reservation).first():
-            pass  # No sample data needed for reservationsx
+    with app.app_context():
+        db.create_all()  # 确保 reservations 表存在
+        with db.session.no_autoflush:
+            if not db.session.query(Reservation).first():
+                pass  # No sample data needed
