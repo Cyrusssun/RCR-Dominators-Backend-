@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from __init__ import app, db, login_manager  # Key Flask objects 
 # API endpoints
 from api.user import user_api 
+from api.reservation import reservation_bp
 from api.python_exec_api import python_exec_api
 from api.javascript_exec_api import javascript_exec_api
 from api.section import section_api
