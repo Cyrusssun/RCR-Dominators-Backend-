@@ -174,4 +174,4 @@ class ReservationDetailAPI(Resource):
 
 reservation_api.add_resource(ScheduleAPI,          '/api/schedule')
 reservation_api.add_resource(ReservationListAPI,   '/api/reservations')
-reservation_api.add_resource(ReservationDetailAPI, '/api/reservations/<string:code>')
+reservation_api.add_resource(ReservationDetailAPI, '/api/reservations/<string:code>') 
