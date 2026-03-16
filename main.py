@@ -13,6 +13,8 @@ from __init__ import app, db, login_manager  # Key Flask objects
 # API endpoints
 from api.user import user_api 
 from api.reservation import reservation_bp
+from api.note_api import note_bp
+from model.note import initNotes
 from api.python_exec_api import python_exec_api
 from api.javascript_exec_api import javascript_exec_api
 from api.section import section_api
@@ -82,12 +84,14 @@ app.register_blueprint(data_export_import_api)  # Register the data export/impor
 app.register_blueprint(joke_api)  # Register the joke API blueprint
 app.register_blueprint(post_api)  # Register the social media post API
 app.register_blueprint(reservation_bp)
+app.register_blueprint(note_bp)
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
 with app.app_context():
     initJokes()
     initReservations()
+    initNotes()
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
