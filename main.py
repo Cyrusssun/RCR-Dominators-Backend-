@@ -14,6 +14,8 @@ from __init__ import app, db, login_manager  # Key Flask objects
 from api.user import user_api 
 from api.reservation import reservation_bp
 from api.note_api import note_bp
+from api.titanic_api import titanic_api
+from model.titanic import initTitanic
 from model.note import initNotes
 from api.python_exec_api import python_exec_api
 from api.javascript_exec_api import javascript_exec_api
@@ -85,6 +87,7 @@ app.register_blueprint(joke_api)  # Register the joke API blueprint
 app.register_blueprint(post_api)  # Register the social media post API
 app.register_blueprint(reservation_bp)
 app.register_blueprint(note_bp)
+app.register_blueprint(titanic_api)
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
@@ -92,6 +95,7 @@ with app.app_context():
     initJokes()
     initReservations()
     initNotes()
+    initTitanic()
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
