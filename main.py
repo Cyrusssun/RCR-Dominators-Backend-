@@ -89,11 +89,8 @@ app.register_blueprint(joke_api)  # Register the joke API blueprint
 app.register_blueprint(post_api)  # Register the social media post API
 app.register_blueprint(reservation_bp)
 app.register_blueprint(note_bp)
-<<<<<<< HEAD
 app.register_blueprint(titanic_api)
-=======
 app.register_blueprint(visitor_api)
->>>>>>> 18cbab6 (titanic prediction of population)
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
@@ -101,11 +98,8 @@ with app.app_context():
     initJokes()
     initReservations()
     initNotes()
-<<<<<<< HEAD
     initTitanic()
-=======
     initVisitor()
->>>>>>> 18cbab6 (titanic prediction of population)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
