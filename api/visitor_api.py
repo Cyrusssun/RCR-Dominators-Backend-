@@ -16,11 +16,15 @@ class VisitorAPI:
             try:
                 model  = VisitorModel.get_instance()
                 result = model.predict(
-                    month       = int(data.get('month', 6)),
-                    is_saturday = bool(data.get('is_saturday', True)),
-                    is_holiday  = bool(data.get('is_holiday', False)),
-                    weather     = data.get('weather', 'sunny'),
-                    train_type  = data.get('train_type', 'steam'),
+                    month          = int(data.get('month', 6)),
+                    day_of_month   = int(data.get('day_of_month', 15)),
+                    is_saturday    = bool(data.get('is_saturday', True)),
+                    is_holiday     = bool(data.get('is_holiday', False)),
+                    is_school_break= bool(data.get('is_school_break', False)),
+                    has_event      = bool(data.get('has_event', False)),
+                    weather        = data.get('weather', 'sunny'),
+                    train_type     = data.get('train_type', 'steam'),
+                    temperature    = int(data.get('temperature', 75)),
                 )
                 return jsonify(result)
             except Exception as e:
