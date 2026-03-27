@@ -14,6 +14,7 @@ from __init__ import app, db, login_manager  # Key Flask objects
 from api.user import user_api 
 from api.reservation import reservation_bp
 from api.note_api import note_bp
+from api.login_api import login_bp
 from api.titanic_api import titanic_api
 from model.titanic import initTitanic
 from model.note import initNotes
@@ -46,6 +47,7 @@ from api.study import study_api
 from api.feedback_api import feedback_api
 from model.study import Study, initStudies
 from model.reservation import Reservation, initReservations
+from model.railroad_user import initRailroadUsers
 from model.classroom import Classroom
 from model.persona import Persona, initPersonas, initPersonaUsers
 from model.post import Post, init_posts
@@ -91,6 +93,7 @@ app.register_blueprint(reservation_bp)
 app.register_blueprint(note_bp)
 app.register_blueprint(titanic_api)
 app.register_blueprint(visitor_api)
+app.register_blueprint(login_bp)
 # app.register_blueprint(announcement_api) ##temporary revert
 
 # Jokes file initialization
@@ -100,6 +103,7 @@ with app.app_context():
     initNotes()
     initTitanic()
     initVisitor()
+    initRailroadUsers()
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
