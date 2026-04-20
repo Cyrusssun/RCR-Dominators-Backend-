@@ -4,49 +4,52 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-import os
 
+import os
 
 # Load environment variables from .env file
 load_dotenv()
 
-
 # Setup of key Flask object (app)
 app = Flask(__name__)
 
-# Configure Flask Port, default to 8587 which is same as Docker setup
+# ========== Session 配置（关键！修复 Cookie 问题） ==========
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'your-secret-key-change-this-in-production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # 允许跨站发送 Cookie
+app.config['SESSION_COOKIE_SECURE'] = False  # 本地开发用 False（HTTP），生产环境用 True（HTTPS）
+app.config['SESSION_COOKIE_PATH'] = '/'
+
+# Configure Flask Port
 app.config['FLASK_PORT'] = int(os.environ.get('FLASK_PORT') or 8428)
 
 # Configure Flask to handle JSON with UTF-8 encoding versus default ASCII
-app.config['JSON_AS_ASCII'] = False  # Allow emojis, non-ASCII characters in JSON responses
-
+app.config['JSON_AS_ASCII'] = False
 
 # Initialize Flask-Login object
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
-# Allowed servers for cross-origin resource sharing (CORS)
-cors = CORS(
-   app,
-   supports_credentials=True,
-   origins=[
-       'http://localhost:4500',
-       'http://127.0.0.1:4500',
-       'http://localhost:4599',
-       'http://127.0.0.1:4599',
-       'http://localhost:4600',
-       'http://127.0.0.1:4600',
-       'http://localhost:4000',
-       'http://127.0.0.1:4000',
-       'https://open-coding-society.github.io',
-       'https://pages.opencodingsociety.com',
-       'http://localhost:8428',     
-       'http://127.0.0.1:8428', 
-   ],
-   methods=["GET", "POST", "PUT", "OPTIONS", "DELETE"],
-)
-
+# ========== CORS 配置（简化版） ==========
+CORS(app,
+     supports_credentials=True,  # 必须为 True
+     origins=[
+         'http://localhost:4000',
+         'http://127.0.0.1:4000',
+         'http://localhost:4500',
+         'http://127.0.0.1:4500',
+         'http://localhost:4599',
+         'http://127.0.0.1:4599',
+         'http://localhost:4600',
+         'http://127.0.0.1:4600',
+         'http://localhost:8428',
+         'http://127.0.0.1:8428',
+         'https://open-coding-society.github.io',
+         'https://pages.opencodingsociety.com',
+     ],
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     methods=["GET", "POST", "PUT", "OPTIONS", "DELETE"],
+     expose_headers=["Set-Cookie"])  # 暴露 Set-Cookie 头
 
 # Admin Defaults
 app.config['ADMIN_USER'] = os.environ.get('ADMIN_USER') or 'Admin Name'
@@ -73,15 +76,11 @@ app.config['MY_PASSWORD'] = os.environ.get('MY_PASSWORD') or os.environ.get('DEF
 app.config['MY_PFP'] = os.environ.get('MY_PFP') or 'default.png'
 app.config['MY_ROLE'] = os.environ.get('MY_ROLE') or 'User'
 
-
-# Browser settings
-SECRET_KEY = os.environ.get('SECRET_KEY') or 'SECRET_KEY' # secret key for session management
+# Browser settings (保留原有配置，但上面已经设置了 SECRET_KEY)
 SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME') or 'sess_python_flask'
 JWT_TOKEN_NAME = os.environ.get('JWT_TOKEN_NAME') or 'jwt_python_flask'
-app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SESSION_COOKIE_NAME'] = SESSION_COOKIE_NAME
 app.config['JWT_TOKEN_NAME'] = JWT_TOKEN_NAME
-
 
 # Database settings
 IS_PRODUCTION = os.environ.get('IS_PRODUCTION') or None
@@ -90,18 +89,16 @@ DB_ENDPOINT = os.environ.get('DB_ENDPOINT') or None
 DB_USERNAME = os.environ.get('DB_USERNAME') or None
 DB_PASSWORD = os.environ.get('DB_PASSWORD') or None
 if DB_ENDPOINT and DB_USERNAME and DB_PASSWORD:
-   # Production - Use MySQL
    DB_PORT = '3306'
    DB_NAME = dbName
    dbString = f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_ENDPOINT}:{DB_PORT}'
-   dbURI =  dbString + '/' + dbName
-   backupURI = None  # MySQL backup would require a different approach
+   dbURI = dbString + '/' + dbName
+   backupURI = None
 else:
-   # Development - Use SQLite
    dbString = 'sqlite:///volumes/'
    dbURI = dbString + dbName + '.db'
    backupURI = dbString + dbName + '_bak.db'
-# Set database configuration in Flask app
+
 app.config['DB_ENDPOINT'] = DB_ENDPOINT
 app.config['DB_USERNAME'] = DB_USERNAME
 app.config['DB_PASSWORD'] = DB_PASSWORD
@@ -113,10 +110,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-
 # Image upload settings
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # maximum size of uploaded content
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']  # supported file types
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -124,26 +120,21 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 app.config['DATA_FOLDER'] = os.path.join(app.instance_path, 'data')
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
 
-
 # GITHUB settings
 app.config['GITHUB_API_URL'] = 'https://api.github.com'
 app.config['GITHUB_TOKEN'] = os.environ.get('GITHUB_TOKEN') or None
 app.config['GITHUB_TARGET_TYPE'] = os.environ.get('GITHUB_TARGET_TYPE') or 'user'
 app.config['GITHUB_TARGET_NAME'] = os.environ.get('GITHUB_TARGET_NAME') or 'open-coding-society'
 
-
-# Gemini API settingsa
+# Gemini API settings
 app.config['GEMINI_SERVER'] = os.environ.get('GEMINI_SERVER') or 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
 app.config['GEMINI_API_KEY'] = os.environ.get('GEMINI_API_KEY') or None
-
 
 # KASM settings
 app.config['KASM_SERVER'] = os.environ.get('KASM_SERVER') or 'https://kasm.opencodingsociety.com'
 app.config['KASM_API_KEY'] = os.environ.get('KASM_API_KEY') or None
 app.config['KASM_API_KEY_SECRET'] = os.environ.get('KASM_API_KEY_SECRET') or None
 
-
 # GROQ API settings
 app.config['GROQ_SERVER'] = os.environ.get('GROQ_SERVER') or 'https://api.groq.com/openai/v1/chat/completions'
 app.config['GROQ_API_KEY'] = os.environ.get('GROQ_API_KEY') or None
-

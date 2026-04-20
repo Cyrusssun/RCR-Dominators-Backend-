@@ -1,16 +1,16 @@
 from flask import Blueprint, request, jsonify, session
-import re, sys, os
+import re
+import sys
+import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from __init__ import db
-from model.railroad_user import RailroadUser, initRailroadUsers
+from model.railroad_user import RailroadUser
 
+# 创建 Blueprint - 这是关键！
 login_bp = Blueprint('login_bp', __name__, url_prefix='/api/auth')
-
 
 def valid_email(email):
     return re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email) is not None
-
 
 @login_bp.route('/register', methods=['POST'])
 def register():
@@ -18,8 +18,8 @@ def register():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    name     = (data.get('name') or '').strip()
-    email    = (data.get('email') or '').strip().lower()
+    name = (data.get('name') or '').strip()
+    email = (data.get('email') or '').strip().lower()
     password = (data.get('password') or '').strip()
 
     if len(name) < 2:
@@ -40,14 +40,13 @@ def register():
     session['user'] = {'name': name, 'email': email}
     return jsonify({'message': 'Account created successfully', 'name': name, 'email': email}), 201
 
-
 @login_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
 
-    email    = (data.get('email') or '').strip().lower()
+    email = (data.get('email') or '').strip().lower()
     password = (data.get('password') or '').strip()
 
     if not valid_email(email) or len(password) < 6:
@@ -58,14 +57,13 @@ def login():
         return jsonify({'error': 'Incorrect email or password'}), 401
 
     session['user'] = {'name': user.name, 'email': email}
+    print(f"Login successful: {email}, Session: {session}")  # 调试信息
     return jsonify({'message': 'Login successful', 'name': user.name, 'email': email}), 200
-
 
 @login_bp.route('/logout', methods=['POST'])
 def logout():
     session.pop('user', None)
     return jsonify({'message': 'Logged out successfully'}), 200
-
 
 @login_bp.route('/status', methods=['GET'])
 def status():
@@ -74,7 +72,6 @@ def status():
         return jsonify({'logged_in': True, 'name': user['name'], 'email': user['email']}), 200
     return jsonify({'logged_in': False}), 200
 
-
 @login_bp.route('/change-password', methods=['POST'])
 def change_password():
     data = request.get_json()
@@ -82,7 +79,7 @@ def change_password():
         return jsonify({'error': 'No data provided'}), 400
 
     current = (data.get('current_password') or '').strip()
-    new_pw  = (data.get('new_password') or '').strip()
+    new_pw = (data.get('new_password') or '').strip()
 
     if len(current) < 6 or len(new_pw) < 6:
         return jsonify({'error': 'Passwords must be at least 6 characters'}), 400
