@@ -66,13 +66,22 @@ class ScheduleAPI(Resource):
         for t in sched['times']:
             booked    = booked_seats(date_str, t)
             available = sched['capacity'] - booked
+            
+            # Determine status matching frontend expectations
+            if available == 0:
+                status = "full"
+            elif available < 10:
+                status = "boarding"
+            else:
+                status = "ontime"
+            
             rides.append({
                 'time':       t,
                 'train_type': sched['train_type'],
                 'capacity':   sched['capacity'],
                 'booked':     booked,
                 'available':  available,
-                'status':     'full' if available == 0 else 'available'
+                'status':     status
             })
 
         return {
@@ -170,6 +179,18 @@ class ReservationDetailAPI(Resource):
         if not r:
             return {'error': 'Reservation not found'}, 404
         return r.to_dict(), 200
+    
+    def delete(self, code):
+        """Delete a reservation by confirmation code."""
+        r = db.session.query(Reservation).filter_by(
+            confirm_code=code.upper()
+        ).first()
+        if not r:
+            return {'error': 'Reservation not found'}, 404
+        
+        db.session.delete(r)
+        db.session.commit()
+        return {'message': 'Reservation deleted successfully'}, 200
 
 
 reservation_api.add_resource(ScheduleAPI,          '/api/schedule')

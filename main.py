@@ -55,10 +55,14 @@ from model.microblog import MicroBlog, Topic, initMicroblogs
 from hacks.jokes import initJokes 
 # from model.announcement import Announcement ##temporary revert
 
+from api.train_schedule_api import train_schedule_bp
+from api.volunteer_api import volunteer_bp
+
 # server only Views
 
 import os
 import requests
+
 
 # Load environment variables
 load_dotenv()
@@ -95,7 +99,8 @@ app.register_blueprint(titanic_api)
 app.register_blueprint(visitor_api)
 app.register_blueprint(login_bp)
 # app.register_blueprint(announcement_api) ##temporary revert
-
+app.register_blueprint(train_schedule_bp)
+app.register_blueprint(volunteer_bp)
 # Jokes file initialization
 with app.app_context():
     initJokes()
@@ -161,7 +166,15 @@ def index():
     print("Home:", current_user)
     return render_template("index.html")
 
+@app.route('/admin/reservations')
+def admin_reservations():
+    """Admin page for reservation management"""
+    return render_template("reservation_admin.html")
 
+@app.route('/admin/volunteer')
+def admin_volunteer():
+    """Admin page for volunteer management"""
+    return render_template("volunteer_admin.html")
 
 @app.route('/users/table2')
 @login_required
