@@ -7,24 +7,9 @@ from flask.cli import AppGroup
 from flask_login import current_user, login_required
 from flask import current_app
 from dotenv import load_dotenv
-from flask_cors import CORS
 
 # import "objects" from "this" project
 from __init__ import app, db, login_manager  # Key Flask objects 
-CORS(app, 
-     origins=[
-         'https://rcr.opencodingsociety.com',  # 生产环境前端
-         'http://localhost:4000',               # 本地 Jekyll
-         'http://127.0.0.1:4000',              # 本地 Jekyll 备用
-         'http://localhost:3000',              # 其他开发端口
-         'https://rcr.opencodingsociety.com'   # 生产环境
-     ],
-     supports_credentials=True,                 # 支持 cookies/session
-     allow_headers=['Content-Type', 'Authorization', 'X-Origin', 'X-Requested-With'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-     max_age=3600  # 预检请求缓存1小时
-)
-
 # API endpoints
 from api.user import user_api 
 from api.reservation import reservation_bp
