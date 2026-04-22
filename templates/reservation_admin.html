@@ -403,7 +403,17 @@
 </div>
 
 <script>
-  const BACKEND = 'http://127.0.0.1:8428';
+
+const BACKEND = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://127.0.0.1:8428';
+    }
+    if (hostname === 'rcr.opencodingsociety.com') {
+        return 'https://rcr-user.opencodingsociety.com';
+    }
+    return 'https://rcr-user.opencodingsociety.com';
+})();
   let reservationsData = [];
   let deleteId = null;
 
