@@ -8,7 +8,7 @@ import os
 import json
 
 from __init__ import app, db
-from model.github import GitHubUser
+# from model.github import GitHubUser  # GitHub validation removed
 from model.kasm import KasmUser
 
 """ Helper Functions """
@@ -218,13 +218,9 @@ class User(db.Model, UserMixin):
             self._email = email
         
     def set_email(self):
-        """Set the email of the user based on the UID, the GitHub username."""
-        data, status = GitHubUser().get(self._uid)
-        if status == 200:
-            self.email = data.get("email", "?")
-            pass
-        else:
-            self.email = "?"
+        """Set email without GitHub validation."""
+        if self._email == '?' or not self._email:
+            self._email = f"{self._uid}@local.user"
 
     # a name getter method, extracts name from object
     @property
@@ -427,10 +423,9 @@ class User(db.Model, UserMixin):
         if school is not None:
             self.school = school
 
-        # Check this on each update
-        if not email:
-            if email == "?":
-                self.set_email()
+        # Check this on each update - set default email if not provided
+        if not email or email == "?":
+            self.email = f"{self.uid}@user.local"
 
         # Make a KasmUser object to interact with the Kasm API
         # Wrap in try-except to ensure db.session.commit() occurs even if Kasm operations fail
