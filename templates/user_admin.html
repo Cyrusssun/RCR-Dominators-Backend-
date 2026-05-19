@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management · Poway Midland Railroad Manager</title>
+    <style>
+        :root {
+            --rust: #2A1A0E;
+            --gold: #D4A017;
+            --green: #2d6a4f;
+            --amber: #e8a020;
+            --red: #c0392b;
+            --steel: #5a6872;
+            --smoke: #666666;
+            --track: #f5f5f5;
+            --card: #ffffff;
+            --border: #cccccc;
+            --text: #000000;
+        }
+
+        .admin-wrap {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 60px 80px;
+            box-sizing: border-box;
+        }
+
+        .admin-header {
+            background: var(--track);
+            border-radius: 14px;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .admin-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c1f0e;
+        }
+
+        .admin-subtitle {
+            font-size: 12px;
+            color: var(--smoke);
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--smoke);
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .action-bar {
+            background: var(--track);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--gold);
+            color: white;
+            border-color: var(--gold);
+        }
+
+        .btn-primary:hover {
+            background: #b8860b;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--red);
+            color: white;
+            border-color: var(--red);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: white;
+            border-color: var(--green);
+        }
+
+        .btn-reservation {
+            background: var(--green);
+            color: white;
+            border-color: var(--green);
+        }
+
+        .btn-volunteer {
+            background: var(--steel);
+            color: white;
+            border-color: var(--steel);
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .data-table-container {
+            overflow-x: auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .data-table th {
+            padding: 12px;
+            text-align: left;
+            background: var(--track);
+            border-bottom: 2px solid var(--gold);
+            font-weight: 700;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:hover {
+            background: var(--track);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-admin {
+            background: rgba(212,160,23,0.2);
+            color: var(--gold);
+        }
+
+        .badge-volunteer {
+            background: rgba(45,106,79,0.2);
+            color: var(--green);
+        }
+
+        .badge-user {
+            background: rgba(90,104,114,0.2);
+            color: var(--steel);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .admin-wrap {
+                padding: 20px;
+            }
+            .data-table th, .data-table td {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+            .action-buttons .btn {
+                padding: 3px 6px;
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+{% include 'navbar.html' %}
+
+<div class="admin-wrap">
+    <div class="admin-header">
+        <div>
+            <div class="admin-title">👥 User Management</div>
+            <div class="admin-subtitle">Poway-Midland Railroad · Admin Dashboard</div>
+        </div>
+        <div>
+            <button class="btn" onclick="refreshData()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-number" id="totalUsers">0</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="totalAdmins">0</div>
+            <div class="stat-label">Administrators</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="totalVolunteers">0</div>
+            <div class="stat-label">Volunteers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="totalRegular">0</div>
+            <div class="stat-label">Regular Users</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search by UID, name, or email..." onkeyup="filterTable()">
+        <button class="btn" onclick="clearFilters()">Clear Filters</button>
+    </div>
+
+    <div class="data-table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>UID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Manage</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="5" style="text-align:center;padding:40px;">Loading users......</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const BACKEND = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://127.0.0.1:8428';
+    }
+    if (hostname === 'rcr.opencodingsociety.com') {
+        return 'https://rcr-user.opencodingsociety.com';
+    }
+    return 'https://rcr-user.opencodingsociety.com';
+})();
+
+let allUsers = [];
+let volunteerUserIds = new Set();  // 存储有志愿者记录的用户的 UID
+let currentSearchQuery = "";
+
+// 获取所有志愿者记录，提取有志愿者记录的用户 UID
+async function loadVolunteerUsers() {
+    try {
+        const API_BASE = (() => {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:8428/api';
+            }
+            if (hostname === 'rcr.opencodingsociety.com') {
+                return 'https://rcr-user.opencodingsociety.com/api';
+            }
+            return 'https://rcr-user.opencodingsociety.com/api';
+        })();
+        
+        const response = await fetch(`${API_BASE}/volunteer/shifts`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            console.log('Failed to load volunteer data, skipping volunteer tag');
+            return;
+        }
+        
+        const shifts = await response.json();
+        
+        // 遍历所有志愿者班次，收集有志愿者记录的用户 UID
+        shifts.forEach(shift => {
+            if (shift.volunteers && Array.isArray(shift.volunteers)) {
+                shift.volunteers.forEach(volunteer => {
+                    if (volunteer.uid) {
+                        volunteerUserIds.add(volunteer.uid);
+                    }
+                    // 有些数据结构可能用 user_uid 字段
+                    if (volunteer.user_uid) {
+                        volunteerUserIds.add(volunteer.user_uid);
+                    }
+                });
+            }
+        });
+        
+        console.log('Users with volunteer records:', Array.from(volunteerUserIds));
+        
+        // 重新渲染表格以更新标签
+        renderTable();
+        
+    } catch (error) {
+        console.error('Error loading volunteer data:', error);
+    }
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch(`${BACKEND}/api/user`, {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Failed to load users');
+        
+        const data = await response.json();
+        allUsers = Array.isArray(data) ? data : (data.users || []);
+        
+        updateStats();
+        
+        // 先渲染基础表格
+        renderTable();
+        
+        // 然后加载志愿者数据（会触发重新渲染）
+        await loadVolunteerUsers();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red);">Failed to load users. Please ensure you are logged in as Admin. </td></td>';
+    }
+}
+
+function updateStats() {
+    const total = allUsers.length;
+    const admins = allUsers.filter(u => u.role === 'Admin').length;
+    
+    // 统计有志愿者记录的用户数量（不是按 role 字段，而是按是否有 volunteer 记录）
+    let volunteerCount = 0;
+    for (const user of allUsers) {
+        if (volunteerUserIds.has(user.uid)) {
+            volunteerCount++;
+        }
+    }
+    
+    const regular = total - admins - volunteerCount;
+    
+    document.getElementById('totalUsers').textContent = total;
+    document.getElementById('totalAdmins').textContent = admins;
+    document.getElementById('totalVolunteers').textContent = volunteerCount;
+    document.getElementById('totalRegular').textContent = regular;
+}
+
+function getRoleBadgeClass(user) {
+    // 优先判断是否为管理员
+    if (user.role === 'Admin') return 'badge-admin';
+    // 如果用户有志愿者记录，显示为志愿者标签
+    if (volunteerUserIds.has(user.uid)) return 'badge-volunteer';
+    return 'badge-user';
+}
+
+function formatRoleName(user) {
+    // 优先判断是否为管理员
+    if (user.role === 'Admin') return 'Administrator';
+    // 如果用户有志愿者记录，显示为 Volunteer
+    if (volunteerUserIds.has(user.uid)) return 'Volunteer';
+    return 'User';
+}
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '—';
+    if (typeof str !== 'string') str = String(str);
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+function renderTable() {
+    let filtered = [...allUsers];
+    
+    if (currentSearchQuery) {
+        const q = currentSearchQuery.toLowerCase();
+        filtered = filtered.filter(u => 
+            (u.uid && u.uid.toLowerCase().includes(q)) ||
+            (u.name && u.name.toLowerCase().includes(q)) ||
+            (u.email && u.email.toLowerCase().includes(q))
+        );
+    }
+    
+    const tbody = document.getElementById('tableBody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;">No users found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = filtered.map(u => {
+        return `
+            <tr>
+                <td><code>${escapeHtml(u.uid)}</code></td>
+                <td>${escapeHtml(u.name)}</td>
+                <td>${escapeHtml(u.email)}</td>
+                <td><span class="badge ${getRoleBadgeClass(u)}">${formatRoleName(u)}</span></td>
+                <td class="action-buttons">
+                    <a href="/admin/reservations?uid=${encodeURIComponent(u.uid)}" class="btn btn-reservation" style="text-decoration:none;">🎫 Reservations</a>
+                    <a href="/admin/volunteer?uid=${encodeURIComponent(u.uid)}" class="btn btn-volunteer" style="text-decoration:none;">👥 Volunteer</a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function filterTable() {
+    currentSearchQuery = document.getElementById('searchInput').value;
+    renderTable();
+}
+
+function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    currentSearchQuery = '';
+    renderTable();
+}
+
+function refreshData() {
+    // 清空志愿者数据缓存
+    volunteerUserIds.clear();
+    loadUsers();
+}
+
+// 页面加载时执行
+loadUsers();
+</script>
+</body>
+</html>

@@ -1,5 +1,3 @@
-
-
 <style>
   :root {
     --rust: #2A1A0E;
@@ -255,6 +253,8 @@
   }
 </style>
 
+<body>
+{% include 'navbar.html' %}
 <div class="admin-wrap">
   <div class="admin-header">
     <div>
@@ -440,6 +440,47 @@ const BACKEND = (() => {
     }
   }
 
+    // Auto-filter by user UID from URL parameter
+  async function autoFilterByUser() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterUid = urlParams.get('uid');
+    
+    if (!filterUid) return;
+    
+    try {
+      const response = await fetch(`${BACKEND}/api/user`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      
+      const users = await response.json();
+      const userList = Array.isArray(users) ? users : (users.users || []);
+      const targetUser = userList.find(u => u.uid === filterUid);
+      
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        if (targetUser) {
+          searchInput.value = targetUser.email || targetUser.name || filterUid;
+        } else {
+          searchInput.value = filterUid;
+        }
+        filterTable();
+        
+        const subtitle = document.querySelector('.admin-subtitle');
+        if (subtitle) {
+          subtitle.innerHTML = `Poway-Midland Railroad · Admin Dashboard · Showing for: <strong>${targetUser ? (targetUser.name || filterUid) : filterUid}</strong> &nbsp; <a href="/admin/reservations" style="color: var(--gold);">[Clear]</a>`;
+        }
+      }
+    } catch (error) {
+      console.error('Auto-filter error:', error);
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.value = filterUid;
+        filterTable();
+      }
+    }
+  }
+  
   // Update statistics
   function updateStats() {
     const total = reservationsData.length;
@@ -682,4 +723,7 @@ const BACKEND = (() => {
 
   // Initialize
   loadReservations();
+  // Auto-filter after loading
+  setTimeout(autoFilterByUser, 500);
 </script>
+<body>

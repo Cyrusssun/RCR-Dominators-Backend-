@@ -1,0 +1,153 @@
+<!-- Navigation Bar Component -->
+<style>
+    .rcr-navbar {
+        background: #ffffff;
+        padding: 12px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        border-bottom: 2px solid var(--gold);
+        font-family: 'Courier New', monospace;
+    }
+    .rcr-navbar .logo {
+        color: var(--gold);
+        font-size: 20px;
+        font-weight: 700;
+        text-decoration: none;
+        letter-spacing: 1px;
+    }
+    .rcr-navbar .logo:hover {
+        opacity: 0.8;
+    }
+    .rcr-nav-links {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .rcr-nav-links a {
+        color: black;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        background: #fce599
+    }
+    .rcr-nav-links a:hover {
+        background: var(--gold);
+        color: var(--rust);
+    }
+    .rcr-nav-links a.active {
+        background: var(--gold);
+        color: var(--rust);
+    }
+    .rcr-user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .rcr-user-name {
+        color: var(--gold);
+        font-size: 12px;
+    }
+    .logout-btn {
+        background: transparent;
+        border: 1px solid var(--red);
+        color: var(--red);
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        transition: all 0.2s;
+    }
+    .logout-btn:hover {
+        background: var(--red);
+        color: white;
+    }
+    @media (max-width: 768px) {
+        .rcr-navbar {
+            padding: 10px 20px;
+            flex-direction: column;
+        }
+        .rcr-nav-links {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="rcr-navbar">
+    <a href="/admin/user" class="logo">🚂 Poway midland railrod manager system</a>
+    <div class="rcr-nav-links">
+        <a href="/admin/user" class="nav-link" data-page="user">👥 Users</a>
+        <a href="/admin/reservations" class="nav-link" data-page="reservations">🎫 Reservations</a>
+        <a href="/admin/volunteer" class="nav-link" data-page="volunteer">👥 Volunteer</a>
+    </div>
+    <div class="rcr-user-info">
+        <span class="rcr-user-name" id="currentUser">Loading...</span>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
+
+<script>
+const BACKEND_NAV = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://127.0.0.1:8428';
+    }
+    return 'https://rcr-user.opencodingsociety.com';
+})();
+
+// Highlight current page in navigation
+const currentPath = window.location.pathname;
+document.querySelectorAll('.nav-link').forEach(link => {
+    if (currentPath.includes(link.getAttribute('data-page'))) {
+        link.classList.add('active');
+    }
+});
+
+// Load current user info
+async function loadCurrentUser() {
+    try {
+        const response = await fetch(`${BACKEND_NAV}/api/id`, {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const user = await response.json();
+            const userNameSpan = document.getElementById('currentUser');
+            if (userNameSpan) {
+                userNameSpan.textContent = user.name || user.uid;
+            }
+        } else {
+            // Not logged in, redirect to login
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load user:', error);
+    }
+}
+
+async function logout() {
+    try {
+        await fetch(`${BACKEND_NAV}/api/authenticate`, {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        window.location.href = '/login';
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/login';
+    }
+}
+
+loadCurrentUser();
+</script>

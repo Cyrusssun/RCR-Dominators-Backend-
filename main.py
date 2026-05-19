@@ -176,6 +176,18 @@ def admin_volunteer():
     """Admin page for volunteer management"""
     return render_template("volunteer_admin.html")
 
+@app.route('/admin/user')
+def admin_user():
+    return render_template('user_admin.html')
+
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout_redirect():
+    return render_template('login.html')
+
 @app.route('/users/table2')
 @login_required
 def u2table():

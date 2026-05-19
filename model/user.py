@@ -167,8 +167,8 @@ class User(db.Model, UserMixin):
     # Define many-to-many relationship with Persona model through UserPersona table
     # Overlaps setting silences SQLAlchemy warnings about multiple relationship paths
     # No backref needed as Persona has its own 'users' relationship
-    personas = db.relationship('Persona', secondary='user_personas', lazy='subquery',
-                               overlaps="user_personas_rel,persona,users")
+    # personas = db.relationship('Persona', secondary='user_personas', lazy='subquery',
+                               # overlaps="user_personas_rel,persona,users")
     
     def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], kasm_server_needed=False, role="User", pfp='', grade_data=None, ap_exam=None, school="Unknown", sid=None, classes=None):
         self._name = name
@@ -374,8 +374,8 @@ class User(db.Model, UserMixin):
         }
         sections = self.read_sections()
         data.update(sections)
-        personas = self.read_personas()
-        data.update(personas)
+# personas = self.read_personas()
+# data.update(personas)
         return data
         
     # CRUD update: updates user name, password, phone
@@ -542,15 +542,13 @@ class User(db.Model, UserMixin):
                 sections.append(section_data)
         return {"sections": sections} 
     
-    def read_personas(self):
-        """Reads the personas associated with the user."""
-        personas = []
-        # Use the user_personas_rel backref to avoid N+1 queries
-        # This data is already loaded via lazy='subquery' on the relationship
-        if hasattr(self, 'user_personas_rel') and self.user_personas_rel:
-            for user_persona in self.user_personas_rel:
-                personas.append(user_persona.read())
-        return {"personas": personas}
+# def read_personas(self):
+#     """Reads the personas associated with the user."""
+#     personas = []
+#     if hasattr(self, 'user_personas_rel') and self.user_personas_rel:
+#         for user_persona in self.user_personas_rel:
+#             personas.append(user_persona.read())
+#     return {"personas": personas}
     
     def update_section(self, section_data):
         """

@@ -248,7 +248,8 @@
     .data-table th, .data-table td { padding: 6px 8px; font-size: 10px; }
   }
 </style>
-
+<body>
+{% include 'navbar.html' %}
 <div class="admin-wrap">
   <div class="admin-header">
     <div>
@@ -359,6 +360,7 @@
   </div>
 </div>
 
+
 <script>
   
 const API_BASE = (() => {
@@ -385,6 +387,56 @@ const API_BASE = (() => {
     } catch (error) {
       console.error('Error:', error);
       document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--red);">Failed to load shifts. Make sure backend is running.</td></tr>';
+    }
+  }
+
+  const BACKEND = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://127.0.0.1:8428';
+    }
+    return 'https://rcr-user.opencodingsociety.com';
+})();
+
+
+    // Auto-filter by user UID from URL parameter
+  async function autoFilterByUser() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const filterUid = urlParams.get('uid');
+    
+    if (!filterUid) return;
+    
+    try {
+      const response = await fetch(`${BACKEND}/api/user`, {
+        credentials: 'include'
+      });
+      if (!response.ok) throw new Error('Failed to fetch users');
+      
+      const users = await response.json();
+      const userList = Array.isArray(users) ? users : (users.users || []);
+      const targetUser = userList.find(u => u.uid === filterUid);
+      
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        if (targetUser) {
+          searchInput.value = targetUser.name || targetUser.email || filterUid;
+        } else {
+          searchInput.value = filterUid;
+        }
+        filterTable();
+        
+        const subtitle = document.querySelector('.admin-subtitle');
+        if (subtitle) {
+          subtitle.innerHTML = `Poway-Midland Railroad · Volunteer Dashboard · Showing for: <strong>${targetUser ? (targetUser.name || filterUid) : filterUid}</strong> &nbsp; <a href="/admin/volunteer" style="color: var(--gold);">[Clear]</a>`;
+        }
+      }
+    } catch (error) {
+      console.error('Auto-filter error:', error);
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.value = filterUid;
+        filterTable();
+      }
     }
   }
 
@@ -607,4 +659,7 @@ const API_BASE = (() => {
   }
 
   loadData();
+  // Auto-filter after loading
+  setTimeout(autoFilterByUser, 500);
 </script>
+<body>
