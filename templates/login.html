@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poway midland railrod manager system Login</title>
+    <title>RCR Admin Login</title>
     <style>
         :root {
             --rust: #2A1A0E;
@@ -162,7 +162,7 @@
 <div class="login-container">
     <div class="login-card">
         <div class="logo">
-            <h1>🚂 Poway midland railrod manager system</h1>
+            <h1>🚂 RCR Admin</h1>
             <p>Poway-Midland Railroad · Management System</p>
         </div>
 
@@ -181,7 +181,8 @@
         </form>
         
         <div style="margin-top: 20px; text-align: center; font-size: 11px; color: var(--smoke);">
-            <p>Need help? Contact your administrator.</p>
+            <p>Test Account: <strong>admin</strong> / <strong>admin123</strong></p>
+        </div>
     </div>
 </div>
 
@@ -200,7 +201,6 @@ function showMessage(message, type) {
     msgDiv.className = 'message ' + (type === 'success' ? 'success-message' : 'error-message');
     msgDiv.style.display = 'block';
     
-    // 3秒后自动隐藏成功消息
     if (type === 'success') {
         setTimeout(() => {
             msgDiv.style.display = 'none';
@@ -214,18 +214,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const uid = document.getElementById('uid').value.trim();
     const password = document.getElementById('password').value;
     const loginBtn = document.getElementById('loginBtn');
-    const msgDiv = document.getElementById('infoMsg');
     
-    // 隐藏之前的消息
-    msgDiv.style.display = 'none';
-    
-    // 显示加载状态
+    showMessage('', '');
     loginBtn.disabled = true;
     loginBtn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
     
     try {
-        console.log('Attempting login for:', uid);
-        
+        // 使用正确的 API 端点
         const response = await fetch(`${BACKEND}/api/authenticate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -234,24 +229,17 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         });
         
         const data = await response.json();
-        console.log('Response:', response.status, data);
         
         if (response.ok) {
-            // 登录成功
             showMessage('✅ Login successful! Redirecting...', 'success');
             loginBtn.innerHTML = '✓ Success!';
-            
-            // 延迟1秒后跳转
             setTimeout(() => {
                 window.location.href = '/admin/user';
             }, 1000);
         } else {
-            // 登录失败
             let errorMsg = data.message || 'Invalid UID or password';
             if (response.status === 401) {
                 errorMsg = '❌ Invalid UID or password. Please try again.';
-            } else if (response.status === 404) {
-                errorMsg = '❌ Server error. Please contact administrator.';
             }
             showMessage(errorMsg, 'error');
             loginBtn.disabled = false;
@@ -259,7 +247,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         }
     } catch (error) {
         console.error('Login error:', error);
-        showMessage('❌ Network error. Cannot connect to server. Make sure the backend is running.', 'error');
+        showMessage('❌ Network error. Cannot connect to server.', 'error');
         loginBtn.disabled = false;
         loginBtn.innerHTML = 'Sign In';
     }
