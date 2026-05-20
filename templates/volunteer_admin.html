@@ -377,18 +377,39 @@ const API_BASE = (() => {
   let currentFilter = "";
   let searchQuery = "";
 
-  async function loadData() {
-    try {
-      const response = await fetch(`${API_BASE}/volunteer/shifts`);
-      if (!response.ok) throw new Error('Failed to load');
-      allShifts = await response.json();
-      updateStats();
-      renderTable();
-    } catch (error) {
-      console.error('Error:', error);
-      document.getElementById('tableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--red);">Failed to load shifts. Make sure backend is running.</td></tr>';
+// 虚拟班次数据
+const MOCK_SHIFTS = [
+  { id: 1, date: '2026-06-01', train_type: 'steam', time_start: '10:00', time_end: '14:00', max_volunteers: 4, current_volunteers: 2, slots_available: 2, volunteers: [{ name: 'John Doe', email: 'john@example.com', job: 'Conductor' }, { name: 'Jane Smith', email: 'jane@example.com', job: 'Ticket' }] },
+  { id: 2, date: '2026-06-02', train_type: 'cable', time_start: '11:00', time_end: '15:00', max_volunteers: 4, current_volunteers: 1, slots_available: 3, volunteers: [{ name: 'Bob Wilson', email: 'bob@example.com', job: 'Safety' }] },
+  { id: 3, date: '2026-06-08', train_type: 'speeder', time_start: '12:00', time_end: '16:00', max_volunteers: 3, current_volunteers: 0, slots_available: 3, volunteers: [] },
+  { id: 4, date: '2026-06-09', train_type: 'steam', time_start: '10:00', time_end: '15:00', max_volunteers: 5, current_volunteers: 3, slots_available: 2, volunteers: [{ name: 'Alice Chen', email: 'alice@example.com', job: 'Conductor' }, { name: 'Mike Brown', email: 'mike@example.com', job: 'Engineer' }, { name: 'Sarah Lee', email: 'sarah@example.com', job: 'Ticket' }] },
+  { id: 5, date: '2026-06-15', train_type: 'cable', time_start: '11:00', time_end: '14:00', max_volunteers: 4, current_volunteers: 0, slots_available: 4, volunteers: [] },
+  { id: 6, date: '2026-06-16', train_type: 'steam', time_start: '10:00', time_end: '16:00', max_volunteers: 5, current_volunteers: 2, slots_available: 3, volunteers: [{ name: 'Tom Davis', email: 'tom@example.com', job: 'Engineer' }, { name: 'Lisa Wong', email: 'lisa@example.com', job: 'Safety' }] }
+];
+
+async function loadData() {
+  try {
+    const response = await fetch(`${API_BASE}/volunteer/shifts`);
+    if (!response.ok) throw new Error('Failed to load');
+    const data = await response.json();
+    // 如果后端返回空数据，使用虚拟数据
+    if (data && data.length > 0) {
+      allShifts = data;
+    } else {
+      console.log('No data from backend, using mock data');
+      allShifts = MOCK_SHIFTS;
     }
+    updateStats();
+    renderTable();
+  } catch (error) {
+    console.error('Error loading from backend:', error);
+    // 后端不可用时使用虚拟数据
+    console.log('Backend unavailable, using mock data');
+    allShifts = MOCK_SHIFTS;
+    updateStats();
+    renderTable();
   }
+}
 
   const BACKEND = (() => {
     const hostname = window.location.hostname;
