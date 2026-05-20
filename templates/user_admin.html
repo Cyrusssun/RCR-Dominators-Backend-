@@ -242,7 +242,7 @@
 <div class="admin-wrap">
     <div class="admin-header">
         <div>
-            <div class="admin-title">👥 User Management</div>
+            <div class="admin-title">👤 User Management</div>
             <div class="admin-subtitle">Poway-Midland Railroad · Admin Dashboard</div>
         </div>
         <div>
@@ -456,7 +456,7 @@ function renderTable() {
                 <td><span class="badge ${getRoleBadgeClass(u)}">${formatRoleName(u)}</span></td>
                 <td class="action-buttons">
                     <a href="/admin/reservations?uid=${encodeURIComponent(u.uid)}" class="btn btn-reservation" style="text-decoration:none;">🎫 Reservations</a>
-                    <a href="/admin/volunteer?uid=${encodeURIComponent(u.uid)}" class="btn btn-volunteer" style="text-decoration:none;">👥 Volunteer</a>
+                    <a href="/admin/volunteer?uid=${encodeURIComponent(u.uid)}" class="btn btn-volunteer" style="text-decoration:none;">🤝 Volunteers</a>
                 </td>
             </tr>
         `;
