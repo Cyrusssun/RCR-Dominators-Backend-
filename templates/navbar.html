@@ -122,12 +122,6 @@ async function loadCurrentUser() {
         if (response.ok) {
             const user = await response.json();
             
-            // ⭐ 新增：检查是否为管理员 ⭐
-            if (user.role !== 'Admin') {
-                // 不是管理员，跳转到普通首页或登录页
-                window.location.href = 'https://rcr.opencodingsociety.com/';
-                return;
-            }
             
             const userNameSpan = document.getElementById('currentUser');
             if (userNameSpan) {

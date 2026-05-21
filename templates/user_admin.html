@@ -131,6 +131,11 @@
             border-color: var(--red);
         }
 
+        .btn-danger:hover {
+            background: #a93226;
+            transform: translateY(-1px);
+        }
+
         .btn-success {
             background: var(--green);
             color: white;
@@ -218,6 +223,42 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* 删除按钮特别样式 */
+        .btn-delete-user {
+            background: #b03a2e;
+            color: white;
+            border-color: #8b2c22;
+        }
+        .btn-delete-user:hover {
+            background: #8b2c22;
+            transform: translateY(-1px);
+        }
+
+        /* 简易toast提示 */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #2c3e2f;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            font-weight: bold;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .toast-error {
+            background: #c0392b;
+        }
+        .toast-warning {
+            background: #e67e22;
         }
 
         @media (max-width: 768px) {
@@ -229,7 +270,11 @@
                 font-size: 10px;
             }
             .action-buttons .btn {
-                padding: 3px 6px;
+                padding: 4px 8px;
+                font-size: 9px;
+            }
+            .btn-delete-user {
+                padding: 4px 8px;
                 font-size: 9px;
             }
         }
@@ -308,6 +353,22 @@ let allUsers = [];
 let volunteerUserIds = new Set();  // 存储有志愿者记录的用户的 UID
 let currentSearchQuery = "";
 
+// 简易toast提示
+function showToast(message, type = 'info') {
+    const existingToast = document.querySelector('.toast-notify');
+    if (existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-notify';
+    if (type === 'error') toast.classList.add('toast-error');
+    if (type === 'warning') toast.classList.add('toast-warning');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        if (toast && toast.parentNode) toast.remove();
+    }, 3500);
+}
+
 // 获取所有志愿者记录，提取有志愿者记录的用户 UID
 async function loadVolunteerUsers() {
     try {
@@ -340,7 +401,6 @@ async function loadVolunteerUsers() {
                     if (volunteer.uid) {
                         volunteerUserIds.add(volunteer.uid);
                     }
-                    // 有些数据结构可能用 user_uid 字段
                     if (volunteer.user_uid) {
                         volunteerUserIds.add(volunteer.user_uid);
                     }
@@ -352,9 +412,49 @@ async function loadVolunteerUsers() {
         
         // 重新渲染表格以更新标签
         renderTable();
+        updateStats();   // 确保统计数据根据志愿者集合刷新
         
     } catch (error) {
         console.error('Error loading volunteer data:', error);
+    }
+}
+
+// 删除用户的核心API调用
+async function deleteUser(uid, userName) {
+    if (!uid) return;
+    
+    // 弹出确认框，二次确认防止误删
+    const confirmMsg = `⚠️ 永久删除用户\n\nUID: ${uid}\n姓名: ${userName || '—'}\n\n此操作不可撤销！\n确定要删除该用户吗？`;
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+    
+    try {
+        // 构建删除API的URL: 遵循 RESTful 风格 DELETE /api/user/{uid}
+        const deleteUrl = `${BACKEND}/api/user/${encodeURIComponent(uid)}`;
+        const response = await fetch(deleteUrl, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            showToast(`✅ 用户 ${userName || uid} 已成功删除`, 'info');
+            // 刷新用户列表
+            await refreshData();
+        } else {
+            let errorMsg = `删除失败 (${response.status})`;
+            try {
+                const errData = await response.json();
+                errorMsg = errData.message || errData.error || errorMsg;
+            } catch(e) {}
+            showToast(`❌ 无法删除用户: ${errorMsg}`, 'error');
+        }
+    } catch (error) {
+        console.error('Delete user error:', error);
+        showToast(`❌ 网络错误或服务器异常: ${error.message}`, 'error');
     }
 }
 
@@ -368,17 +468,17 @@ async function loadUsers() {
         const data = await response.json();
         allUsers = Array.isArray(data) ? data : (data.users || []);
         
+        // 基础渲染与统计（先展示基础角色）
         updateStats();
-        
-        // 先渲染基础表格
         renderTable();
         
-        // 然后加载志愿者数据（会触发重新渲染）
+        // 并行加载志愿者数据（志愿者标签/统计会重新渲染）
         await loadVolunteerUsers();
         
     } catch (error) {
         console.error('Error:', error);
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red);">Failed to load users. Please ensure you are logged in as Admin. </td></td>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--red);">Failed to load users. Please ensure you are logged in as Admin.</td></tr>';
+        showToast('无法加载用户列表，请检查登录状态或后端连接', 'error');
     }
 }
 
@@ -386,7 +486,7 @@ function updateStats() {
     const total = allUsers.length;
     const admins = allUsers.filter(u => u.role === 'Admin').length;
     
-    // 统计有志愿者记录的用户数量（不是按 role 字段，而是按是否有 volunteer 记录）
+    // 统计有志愿者记录的用户数量（基于volunteerUserIds集合，在loadVolunteerUsers后重新调用）
     let volunteerCount = 0;
     for (const user of allUsers) {
         if (volunteerUserIds.has(user.uid)) {
@@ -403,17 +503,13 @@ function updateStats() {
 }
 
 function getRoleBadgeClass(user) {
-    // 优先判断是否为管理员
     if (user.role === 'Admin') return 'badge-admin';
-    // 如果用户有志愿者记录，显示为志愿者标签
     if (volunteerUserIds.has(user.uid)) return 'badge-volunteer';
     return 'badge-user';
 }
 
 function formatRoleName(user) {
-    // 优先判断是否为管理员
     if (user.role === 'Admin') return 'Administrator';
-    // 如果用户有志愿者记录，显示为 Volunteer
     if (volunteerUserIds.has(user.uid)) return 'Volunteer';
     return 'User';
 }
@@ -447,7 +543,18 @@ function renderTable() {
         return;
     }
     
+    // 构建表格，在Manage列添加“删除用户”按钮
     tbody.innerHTML = filtered.map(u => {
+        // 阻止删除当前登录的管理员自己？ 没有后端校验, 由后端决定是否允许删除自己, 前端只做提示增强
+        const deleteBtn = `
+            <button class="btn btn-danger btn-delete-user" 
+                data-uid="${escapeHtml(u.uid)}" 
+                data-name="${escapeHtml(u.name || '')}"
+                onclick="deleteUser('${escapeHtml(u.uid).replace(/'/g, "\\'")}', '${escapeHtml(u.name || '').replace(/'/g, "\\'")}')">
+                🗑️ Delete
+            </button>
+        `;
+        
         return `
             <tr>
                 <td><code>${escapeHtml(u.uid)}</code></td>
@@ -457,6 +564,7 @@ function renderTable() {
                 <td class="action-buttons">
                     <a href="/admin/reservations?uid=${encodeURIComponent(u.uid)}" class="btn btn-reservation" style="text-decoration:none;">🎫 Reservations</a>
                     <a href="/admin/volunteer?uid=${encodeURIComponent(u.uid)}" class="btn btn-volunteer" style="text-decoration:none;">🤝 Volunteers</a>
+                    ${deleteBtn}
                 </td>
             </tr>
         `;
@@ -474,10 +582,12 @@ function clearFilters() {
     renderTable();
 }
 
-function refreshData() {
+async function refreshData() {
     // 清空志愿者数据缓存
     volunteerUserIds.clear();
-    loadUsers();
+    // 重新加载用户 (内部调用loadUsers -> loadVolunteerUsers更新统计)
+    await loadUsers();
+    showToast('数据已刷新', 'info');
 }
 
 // 页面加载时执行
