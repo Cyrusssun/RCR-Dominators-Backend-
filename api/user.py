@@ -386,9 +386,10 @@ class UserAPI:
                 if user is None or not user.is_password(password):
                     return {'message': f"Invalid user id or password"}, 401
                 
-                # ⭐ 只允许管理员登录 ⭐
+                # ⭐ ADMIN-ONLY LOGIN RESTRICTION ⭐
+                # Only users with role 'Admin' can log in
                 if user.role != 'Admin':
-                    return {'message': "只有管理员可以登录此系统"}, 403
+                    return {'message': "Only administrators can log in to this system"}, 403
                             
                 # Check if user is found
                 if user:
