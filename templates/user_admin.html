@@ -645,6 +645,10 @@ function renderTable() {
         const safeEmail = escapeHtml(u.email);
         const roleBadge = getRoleBadgeClass(u);
         const roleName = formatRoleName(u);
+        
+        // Critical fix: Don't encode UID, only escape double quotes
+        const uidForAttribute = u.uid.replace(/"/g, '&quot;');
+        
         return `
             <tr>
                 <td><code>${safeUid}</code></td>
@@ -654,11 +658,80 @@ function renderTable() {
                 <td class="action-buttons">
                     <a href="/admin/reservations?uid=${encodeURIComponent(u.uid)}" class="btn btn-reservation" style="text-decoration:none;">🎫 Reservations</a>
                     <a href="/admin/volunteer?uid=${encodeURIComponent(u.uid)}" class="btn btn-volunteer" style="text-decoration:none;">🤝 Volunteers</a>
-                    <button class="btn btn-delete" data-uid="${encodeURIComponent(u.uid)}" data-name="${safeName.replace(/"/g, '&quot;')}" onclick="handleDeleteClick(this)">🗑️ Delete</button>
+                    <button class="btn btn-delete" data-uid="${uidForAttribute}" data-name="${safeName.replace(/"/g, '&quot;')}" onclick="handleDeleteClick(this)">🗑️ Delete</button>
                 </td>
             </tr>
         `;
     }).join('');
+}
+
+window.handleDeleteClick = function(btnElement) {
+    // Use the stored UID directly, no encoding/decoding needed
+    const uid = btnElement.getAttribute('data-uid');
+    const name = btnElement.getAttribute('data-name') || 'User';
+    
+    console.log(`Preparing to delete user: ${uid}`);  // Debug log
+    
+    if (!uid) return;
+    const targetUser = allUsers.find(u => u.uid === uid);
+    if (targetUser) {
+        promptDeleteUser(targetUser);
+    } else {
+        promptDeleteUser({ uid: uid, name: name });
+    }
+};
+
+async function deleteUserByUid(uid, userName) {
+    // Use original UID directly, don't encode
+    const cleanUid = uid;  // Keep as-is, e.g., rebeccajin40@gmail.com
+    
+    console.log(`Sending delete request: ${cleanUid}`);
+    
+    const deleteUrl = `${BACKEND}/api/user`;
+    try {
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const originalText = confirmBtn.innerText;
+        confirmBtn.innerHTML = '<span class="loading-spinner"></span> Deleting...';
+        confirmBtn.disabled = true;
+        
+        const response = await fetch(deleteUrl, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uid: cleanUid })
+        });
+        
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+        
+        console.log(`Response status: ${response.status}`);
+        
+        if (response.ok) {
+            showMessage(`✅ User "${userName}" deleted successfully`);
+            // Remove from local array
+            allUsers = allUsers.filter(u => u.uid !== uid);
+            updateStats();
+            renderTable();
+            closeModal();
+        } else {
+            let errorMsg = `Delete failed: ${response.status}`;
+            try {
+                const errData = await response.json();
+                errorMsg = errData.message || errData.error || errorMsg;
+            } catch(e) {}
+            showMessage(`❌ ${errorMsg}`, true);
+        }
+    } catch (err) {
+        console.error('Delete error:', err);
+        showMessage(`Network error: ${err.message}`, true);
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        if(confirmBtn) {
+            confirmBtn.innerHTML = 'Delete Permanently';
+            confirmBtn.disabled = false;
+        }
+    }
 }
 
 window.handleDeleteClick = function(btnElement) {
