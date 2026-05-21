@@ -221,7 +221,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     
     try {
         // 使用正确的 API 端点
-        const response = await fetch(`${BACKEND}/api/authenticate`, {
+        const response = await fetch(`${BACKEND}/api/admin/authenticate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -230,13 +230,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
         const data = await response.json();
         
-        if (response.ok) {
-            showMessage('✅ Login successful! Redirecting...', 'success');
-            loginBtn.innerHTML = '✓ Success!';
-            setTimeout(() => {
-                window.location.href = '/admin/user';
-            }, 1000);
-        } else {
+if (response.ok) {
+    // 检查是否是管理员
+    if (data.user && data.user.role !== 'Admin') {
+        showMessage('❌ You do not have administrator privileges. Access denied.', 'error');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = 'Sign In';
+        return;
+    }
+    
+    showMessage('✅ Login successful! Redirecting...', 'success');
+    loginBtn.innerHTML = '✓ Success!';
+    setTimeout(() => {
+        window.location.href = '/admin/user';
+    }, 1000);
+} else {
             let errorMsg = data.message || 'Invalid UID or password';
             if (response.status === 401) {
                 errorMsg = '❌ Invalid UID or password. Please try again.';

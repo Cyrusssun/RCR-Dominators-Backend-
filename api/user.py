@@ -363,6 +363,7 @@ class UserAPI:
             return {'message': f'Sections {sections} deleted successfully'}, 200
 
     class _Security(Resource):
+        """Regular login endpoint - allows all users (Admin, User, Teacher, etc.)"""
         def post(self):
             try:
                 body = request.get_json()
@@ -386,10 +387,7 @@ class UserAPI:
                 if user is None or not user.is_password(password):
                     return {'message': f"Invalid user id or password"}, 401
                 
-                # ⭐ ADMIN-ONLY LOGIN RESTRICTION ⭐
-                # Only users with role 'Admin' can log in
-                if user.role != 'Admin':
-                    return {'message': "Only administrators can log in to this system"}, 403
+                # NO ADMIN CHECK HERE - ALL USERS CAN LOGIN
                             
                 # Check if user is found
                 if user:
@@ -498,6 +496,99 @@ class UserAPI:
                 return {
                     "message": "Failed to invalidate token",
                     "error": str(e)
+                }, 500
+
+    class _AdminSecurity(Resource):
+        """Admin-only login endpoint - only users with role 'Admin' can log in here"""
+        def post(self):
+            try:
+                body = request.get_json()
+                if not body:
+                    return {
+                        "message": "Please provide user details",
+                        "data": None,
+                        "error": "Bad request"
+                    }, 400
+                ''' Get Data '''
+                uid = body.get('uid')
+                if uid is None:
+                    return {'message': f'User ID is missing'}, 401
+                password = body.get('password')
+                if not password:
+                    return {'message': f'Password is missing'}, 401
+                            
+                ''' Find user '''
+                user = User.query.filter_by(_uid=uid).first()
+                
+                if user is None or not user.is_password(password):
+                    return {'message': f"Invalid user id or password"}, 401
+                
+                # ⭐ ADMIN-ONLY CHECK ⭐
+                if user.role != 'Admin':
+                    return {'message': "Only administrators can log in to this system"}, 403
+                            
+                # Check if user is found
+                if user:
+                    try:
+                        token = jwt.encode(
+                            {"_uid": user._uid},
+                            current_app.config["SECRET_KEY"],
+                            algorithm="HS256"
+                        )
+                        # Return JSON response with cookie
+                        is_production = os.environ.get('IS_PRODUCTION', 'false').lower() == 'true'
+                        
+                        # Create JSON response
+                        response_data = {
+                            "message": f"Admin authentication for {user._uid} successful",
+                            "user": {
+                                "uid": user._uid,
+                                "name": user.name,
+                                "role": user.role,
+                                "class": user._class if getattr(user, '_class', None) is not None else []
+                            }
+                        }
+                        resp = jsonify(response_data)
+                        
+                        # Set cookie
+                        if is_production:
+                            resp.set_cookie(
+                                current_app.config["JWT_TOKEN_NAME"],
+                                token,
+                                max_age=43200,  # 12 hours in seconds
+                                secure=True,
+                                httponly=True,
+                                path='/',
+                                samesite='None',
+                                domain='.opencodingsociety.com'
+                            )
+                        else:
+                            resp.set_cookie(
+                                current_app.config["JWT_TOKEN_NAME"],
+                                token,
+                                max_age=43200,  # 12 hours in seconds
+                                secure=False,
+                                httponly=False,
+                                path='/',
+                                samesite='Lax'
+                            )
+                        print(f"Admin token set: {token}")
+                        return resp 
+                    except Exception as e:
+                        return {
+                            "error": "Something went wrong",
+                            "message": str(e)
+                        }, 500
+                return {
+                    "message": "Error fetching auth token!",
+                    "data": None,
+                    "error": "Unauthorized"
+                }, 404
+            except Exception as e:
+                return {
+                    "message": "Something went wrong!",
+                    "error": str(e),
+                    "data": None
                 }, 500
 
     class _GradeData(Resource):
@@ -733,7 +824,8 @@ class UserAPI:
     api.add_resource(_CRUD, '/user')
     api.add_resource(_GuestCRUD, '/user/guest')
     api.add_resource(_Section, '/user/section')
-    api.add_resource(_Security, '/authenticate')
+    api.add_resource(_Security, '/authenticate')           # Regular login - all users
+    api.add_resource(_AdminSecurity, '/admin/authenticate') # Admin-only login
     api.add_resource(_GradeData, '/grade_data')
     api.add_resource(_APExam, '/apexam')
     api.add_resource(_School, '/school')
