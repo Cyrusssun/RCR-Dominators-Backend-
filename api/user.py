@@ -361,6 +361,7 @@ class UserAPI:
                 return {'message': f'1 or more sections failed to delete, current {sections} requested {current_user.read_sections()}'}, 404
     
             return {'message': f'Sections {sections} deleted successfully'}, 200
+
     class _Security(Resource):
         def post(self):
             try:
@@ -380,12 +381,14 @@ class UserAPI:
                     return {'message': f'Password is missing'}, 401
                             
                 ''' Find user '''
-    
                 user = User.query.filter_by(_uid=uid).first()
                 
                 if user is None or not user.is_password(password):
-                    
                     return {'message': f"Invalid user id or password"}, 401
+                
+                # ⭐ 只允许管理员登录 ⭐
+                if user.role != 'Admin':
+                    return {'message': "只有管理员可以登录此系统"}, 403
                             
                 # Check if user is found
                 if user:
@@ -428,7 +431,7 @@ class UserAPI:
                                 token,
                                 max_age=43200,  # 12 hours in seconds
                                 secure=False,
-                                httponly=False,  # Set to True for more security if JS access not needed
+                                httponly=False,
                                 path='/',
                                 samesite='Lax'
                             )
@@ -436,21 +439,21 @@ class UserAPI:
                         return resp 
                     except Exception as e:
                         return {
-                                        "error": "Something went wrong",
-                                        "message": str(e)
-                                    }, 500
+                            "error": "Something went wrong",
+                            "message": str(e)
+                        }, 500
                 return {
-                                "message": "Error fetching auth token!",
-                                "data": None,
-                                "error": "Unauthorized"
-                            }, 404
+                    "message": "Error fetching auth token!",
+                    "data": None,
+                    "error": "Unauthorized"
+                }, 404
             except Exception as e:
-                 return {
-                                "message": "Something went wrong!",
-                                "error": str(e),
-                                "data": None
-                            }, 500
-                 
+                return {
+                    "message": "Something went wrong!",
+                    "error": str(e),
+                    "data": None
+                }, 500
+         
         @token_required()
         def delete(self):
             ''' Invalidate the current user's token by setting its expiry to 0 '''
@@ -478,7 +481,6 @@ class UserAPI:
                         path='/',
                         samesite='None',
                         domain='.opencodingsociety.com'
-                
                     )
                 else:
                     resp.set_cookie(
@@ -486,7 +488,7 @@ class UserAPI:
                         token,
                         max_age=0,  # Immediately expire the cookie
                         secure=False,
-                        httponly=False,  # Set to True for more security if JS access not needed
+                        httponly=False,
                         path='/',
                         samesite='Lax'
                     )
@@ -820,7 +822,5 @@ class UserAPI:
 
             user.update({'class': classes})
             return jsonify({'uid': user.uid, 'class': user._class})
-
-
 
     api.add_resource(_Class, '/user/class')
